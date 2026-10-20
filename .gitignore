@@ -1,0 +1,17 @@
+# Large generated input files stay local. Version the generator and small sample.
+/data/raw/*.csv
+
+# Exercise solutions and the preserved introductory export stay local.
+/data/answer_key/
+/data/backups/
+
+# Local Python/runtime files and future database outputs.
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+*.duckdb
+*.duckdb.wal
+.env
+.env.*
+!.env.example
