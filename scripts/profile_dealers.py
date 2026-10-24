@@ -2,11 +2,8 @@ import csv
 from pathlib import Path
 
 file_path = Path("data/raw/dealers.csv")
-print(file_path.exists())  # show whether the CSV exists
-
 with file_path.open(mode="r", encoding="utf-8", newline="") as csv_file:
     reader = csv.DictReader(csv_file)
-    print(reader.fieldnames)  # show the column names
 
     row_count = 0
     dealer_ids = set()  # remember non-blank IDs from earlier rows
