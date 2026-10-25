@@ -11,7 +11,7 @@ A data engineering project that integrates dealership inventory, listings, custo
 Clone the repo, then generate a small practice dataset and profile it:
 
 ```bash
-python3 scripts/generate_synthetic_data.py --output data/raw --preset practice
+python3 scripts/generate_synthetic_data.py --output data --preset practice
 python3 scripts/profile_dealers.py
 ```
 
@@ -53,7 +53,7 @@ The full dataset is about 1 GB across six files and takes several minutes
 to generate:
 
 ```bash
-python3 scripts/generate_synthetic_data.py --output data/raw --preset large
+python3 scripts/generate_synthetic_data.py --output data --preset large
 python3 scripts/profile_dealers.py
 ```
 
