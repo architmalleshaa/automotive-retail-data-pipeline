@@ -4,7 +4,8 @@ A data engineering project that integrates dealership inventory, listings, custo
 
 ## Requirements
 
-- Python 3.11 or newer. No third-party packages.
+- Python 3.11 or newer.
+- `duckdb` and `pytest`. Install with `pip install duckdb pytest`.
 
 ## Quick start
 
@@ -178,3 +179,23 @@ the top of this list is what an account manager would work through first.
 The join uses `clean_dealers` rather than `raw_dealers` deliberately. The six
 duplicated `dealer_id` values in the raw table would each match twice and
 inflate the counts.
+
+## Tests
+
+```bash
+pytest tests/test_pipeline.py
+```
+
+Six checks run against `data/database/pipeline.db` after the pipeline scripts
+have been run:
+
+- The clean and quarantine tables add back up to the checked table, for dealers,
+  vehicles and listings. A rule that silently drops rows fails here.
+- Every row in `clean_listings` points at a `vin` that exists in
+  `clean_vehicles`.
+- Every row in `clean_vehicles` points at a `dealer_id` that exists in
+  `clean_dealers`.
+- No `dealer_id` appears twice in `clean_dealers`.
+
+The first three prove nothing went missing. The last three prove the rules
+actually did their work, which a row count alone cannot show.
