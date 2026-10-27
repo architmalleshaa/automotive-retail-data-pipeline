@@ -141,3 +141,40 @@ Cleaning the dealers changed the counts further down the chain without any new
 rules being written. Pointing the vehicles check at `clean_dealers` moved 11,980
 more cars into quarantine, and those cars in turn moved 14,321 more listings
 into quarantine. That is the chain working as intended.
+
+## Business question: which dealers have invisible inventory?
+
+A vehicle with no listing cannot be seen by a customer, so it cannot sell. It
+occupies space on the lot and loses value while it sits there. This script
+ranks dealers by how many of their vehicles have no listing at all.
+
+```bash
+python3 scripts/analyze_unlisted_inventory.py
+```
+
+It reads `clean_vehicles` and `clean_listings`, keeps the vehicles whose `vin`
+appears nowhere in `clean_listings`, groups them by `dealer_id`, and joins
+`clean_dealers` for the dealership name.
+
+Top 10 on the current dataset:
+
+```
+D597 Chicago Motor Group 0597 17
+D940 Chicago Motor Group 0940 16
+D881 Fishers Motor Group 0881 16
+D748 Columbus Motor Group 0748 15
+D096 Lexington Motor Group 0096 15
+D049 Lexington Motor Group 0049 15
+D324 Cleveland Motor Group 0324 15
+D349 Grand Rapids Motor Group 0349 14
+D082 Louisville Motor Group 0082 14
+D424 Grand Rapids Motor Group 0424 14
+```
+
+The spread here is narrow because the synthetic generator distributes defects
+evenly across dealers. On real inventory the distribution would be skewed, and
+the top of this list is what an account manager would work through first.
+
+The join uses `clean_dealers` rather than `raw_dealers` deliberately. The six
+duplicated `dealer_id` values in the raw table would each match twice and
+inflate the counts.
