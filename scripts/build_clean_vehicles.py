@@ -6,8 +6,8 @@ con = duckdb.connect(str(db_path))
 con.execute("""
     CREATE OR REPLACE TABLE vehicles_checked AS
     SELECT v.*,
-    CASE WHEN v.dealer_id IN (SELECT dealer_id FROM raw_dealers) THEN 'ok'
-    ELSE 'dealer_missing_from_raw_dealers'
+    CASE WHEN v.dealer_id IN (SELECT dealer_id FROM clean_dealers) THEN 'ok'
+    ELSE 'dealer_missing_from_clean_dealers'
     END AS quarantine_reason
     FROM raw_vehicles v
             """)
