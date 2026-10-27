@@ -70,3 +70,74 @@ Repeated rows differing from first row: 3
 
 Both presets use a fixed random seed, so generated files are identical
 run to run and the numbers above are reproducible.
+
+## Pipeline
+
+The three cleaning scripts form a chain. A listing points at a vehicle, and a
+vehicle points at a dealer, so each script checks its rows against the cleaned
+output of the one above it.
+
+Run them in this order:
+
+```bash
+python3 scripts/load_raw.py
+python3 scripts/build_clean_dealers.py
+python3 scripts/build_clean_vehicles.py
+python3 scripts/build_clean_listings.py
+```
+
+Each script writes three tables into `data/database/pipeline.db`:
+
+- `<table>_checked` — every raw row, unchanged, plus a `quarantine_reason`
+  column holding `ok` or the name of the rule it failed.
+- `clean_<table>` — the rows where `quarantine_reason` is `ok`.
+- `quarantine_<table>` — everything else, complete rows with their reason
+  attached.
+
+Nothing is deleted. A quarantined row keeps every column it arrived with, so it
+can be investigated and fixed at the source system rather than silently dropped.
+
+The rules applied so far:
+
+| Table | Rule | Reason written |
+|---|---|---|
+| dealers | `dealer_id` is blank | `dealer_id_missing` |
+| dealers | `dealer_id` appears more than once | `dealer_id_duplicated` |
+| vehicles | `dealer_id` is not in `clean_dealers` | `dealer_missing_from_clean_dealers` |
+| listings | `vin` is not in `clean_vehicles` | `vin_missing_from_clean_vehicles` |
+
+Current counts:
+
+| Table | Total | Clean | Quarantined |
+|---|---|---|---|
+| dealers | 1,006 | 991 | 15 |
+| vehicles | 2,008,918 | 1,986,563 | 22,355 |
+| listings | 2,408,760 | 2,366,937 | 41,823 |
+
+Both duplicate rows are quarantined, not just the second copy. When two rows
+share a `dealer_id` but disagree on the name or city, there is no way to tell
+which one is correct, so keeping either would be a guess.
+
+## What the data looks like
+
+Findings from `scripts/profile_integrity.py` and the three cleaning scripts:
+
+- **41,823 listings advertise cars that are not in the clean vehicle set.**
+  These are customer-facing ads with no vehicle behind them.
+- **22,355 vehicles belong to a dealer that is not in the clean dealer set.**
+  These cars cannot be traced to a dealership.
+- **15 of the 1,006 dealer rows are unusable** — 3 with a blank `dealer_id`,
+  and 12 rows sharing 6 duplicated `dealer_id` values.
+- **7,360 vehicles have no listing at all** — inventory that no customer can
+  see, and therefore cannot sell.
+- **13,377 duplicate VIN rows in `raw_vehicles`** (2,008,918 rows against
+  1,995,541 distinct VINs) and **13,140 duplicate `listing_id` rows in
+  `raw_listings`** (2,408,760 against 2,395,620).
+- **`mileage` and `list_price` load as text, not numbers.** A single bad value
+  in a column forces the whole column to `VARCHAR`, so no arithmetic is
+  possible until those columns are cleaned.
+
+Cleaning the dealers changed the counts further down the chain without any new
+rules being written. Pointing the vehicles check at `clean_dealers` moved 11,980
+more cars into quarantine, and those cars in turn moved 14,321 more listings
+into quarantine. That is the chain working as intended.

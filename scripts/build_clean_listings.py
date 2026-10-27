@@ -9,7 +9,7 @@ con.execute("""
         l.*,
         CASE
             WHEN l.vin IN (SELECT vin FROM clean_vehicles) THEN 'ok'
-            ELSE 'vin_missing_from_raw_vehicles'
+            ELSE 'vin_missing_from_clean_vehicles'
         END AS quarantine_reason
     FROM raw_listings l
 """)
